@@ -1,7 +1,7 @@
 ---
 title: "LeaRn Reactive Shiny"
-author: "Alex Drake (alexanderdrake@tfl.gov.uk)"
-date: "14 March 2017"
+author: "Alex Drake"
+date: "8 March 2017"
 output: 
   html_document:
     toc: yes
@@ -9,7 +9,7 @@ output:
 
 # Building Shiny Apps
 
-We've already seen how to create a shiny application thanks to an [excellent tutorial](http://onelink.tfl.gov.uk/sites/IRUF/ranalytics/SiteAssets/SitePages/ISLR/shinyTut.html) by Reka Solymosi (01/07/2016) - here we'll look again at how to get the most out of it using reactive programming as it's an often overlooked but very powerful feature!
+We've already seen how to create a shiny application thanks to an excellent tutorial by Reka Solymosi (01/07/2016) - here we'll look again at how to get the most out of it using reactive programming as it's an often overlooked but very powerful feature!
 
 There is an excellent explanation from RStudio available at [http://shiny.rstudio.com/articles/reactivity-overview.html](http://shiny.rstudio.com/articles/reactivity-overview.html)
 
