@@ -1,15 +1,16 @@
 ---
 title: "LeaRn Reactive Shiny"
 author: "Alex Drake"
-date: "8 March 2017"
+date: "9 March 2017"
 output: 
   html_document:
     toc: yes
 ---
+*Originally produced for TfL R-User Group internal lunch time sessions*
 
 # Building Shiny Apps
 
-We've already seen how to create a shiny application thanks to an excellent tutorial by Reka Solymosi (01/07/2016) - here we'll look again at how to get the most out of it using reactive programming as it's an often overlooked but very powerful feature!
+We've already seen how to create a shiny application thanks to an excellent tutorial by R.Solymosi (01/07/2016) - here we'll look again at how to get the most out of it using reactive programming as it's an often overlooked but very powerful feature!
 
 There is an excellent explanation from RStudio available at [http://shiny.rstudio.com/articles/reactivity-overview.html](http://shiny.rstudio.com/articles/reactivity-overview.html)
 
@@ -17,7 +18,7 @@ There is an excellent explanation from RStudio available at [http://shiny.rstudi
 
 I'll aim to use and abuse some of the packages covered recently in these sessions, in particular I'll use `tidyverse` for consistency, `jsonlite` to import data from the TfL API and `leaflet`/`shiny` to create the app.
 
-```{r, echo=T, message=F,warning=F}
+```{r, eval=F, message=F,warning=F}
 # load packages
 library(jsonlite)
 library(leaflet)
@@ -150,15 +151,60 @@ acc_data <- reactive({
 
 This function pulls in data from the TfL API based on the user input for year, removes columns not required, cleans the date format and also creates a summary table based on the hour that an incident occurred. We can pull both the cleaned data frame and the summary data frame from the function by using `return(list(...))` BUT will only do it when the user changes the year!
 
+## Reactive Poll
+
+If we were interested in data from the API where we might expect updates (eg current tube status) then we could use a reactive expression to pull through the data. However, we want to make sure that the page does not re-render if the data has not changed, because lag. We can do this by using `reactivePoll` - as the help file says, it's a relatively cheap check function that will only execute a retrieval function when the data has changed. A simple version would be to check for the maximum timestamp in your data and retrieve all required values when this changes.
+
+For the below example we'll create a function that retrieves the current tube status from the TfL API. We can then use this in `reactivePoll` to check the last modified time every 5 seconds and then pull through the data into a data table if the last modified time has changed.
+
+```{r, eval=F}
+
+get_data <- function(){
+  requestUrl <- paste0("https://api.tfl.gov.uk/Line/mode/tube/Status?detail=false",
+                     "&app_id=", AppId, 
+                     "&app_key=", AppKey)
+
+  l <- readLines(requestUrl, encoding="UTF-8", warn = FALSE)
+  d <- fromJSON(l)
+
+  d$created <- strptime(substr(d$created, 1, 16),format = "%Y-%m-%dT%H:%M")
+  d$modified <- strptime(substr(d$modified, 1, 16),format = "%Y-%m-%dT%H:%M")
+
+  d$status <- NA
+  for(i in 1:length(d$name)){
+    d$status[i] <- d$lineStatuses[[i]][4]
+  }
+  return(d)
+}
+
+data <- reactivePoll(intervalMillis = 5000,
+                     session,
+                     # This function returns the time that the data was last modified
+                     checkFunc = function(){
+                       tmp <- get_data()
+                       
+                       max(tmp$modified)
+                     },
+                     # This function returns the updated content
+                     valueFunc = function(){
+                       tmp <- get_data()
+                       tmp %>% select(Line=name, Status=status)
+                     })
+
+output$table <- renderTable({
+  data()
+  })
+```
+
 ## A note on Observers
 
-Observers are equally important when making an application that runs smoothly. They are similar to reactive expressions but also have some key differences - they can access reactive values and expressions but do not return any values. Instead, observers are used to send data to the web browser and there are a few ways of declaring them in your app script - we'll look at the main two.
+Observers are equally important when making an application that runs smoothly. They are similar to reactive expressions but also have some key differences - they can access reactive values and expressions but do not return any values. Instead, observers are used to send data to the web browser and there are a few ways of declaring them in your app script - today we'll look at two of them.
 
 ## Observe with LeafletProxy
 
 We've already created our map, as shown when we run our application. What we now want to do is update it to now display our user requested data ie the data passed in from our reactive expression, `acc_data()`. For efficiency, we do not want to redraw the basemap each time the data is refreshed and so we use `leafletProxy()` as our reactive element, and wrap it inside an `observe()` function.
 
-We must define which element of `acc_data()` we want to use and then let R know which leaflet map we want to add the additional layers too ('map'). Note the use of `clearGroup()` to make sure we only draw the new data on the map.
+We must define which element of `acc_data()` we want to use and then let R know which leaflet map we want to add the additional layers too ('map'). Note the use of `clearGroup()` to make sure we only render the new data on the map.
 
 ```{r, eval=F}
 # create the observer to render appropriate points on map
@@ -220,9 +266,9 @@ We can also use the `render...()` family of functions to observe/react to user c
 output$foo <- renderText({ bar })
 ```
 
-On first glance this would suggest that observers *do* return values however, the function `renderText()` is not an observer/endpoint unless it is assigned to `output$foo`. This assignment wraps `renderText()` into another function which *is* an observer - this is necessary to send the data to the browser.
+On first glance this would suggest that observers *do* return values however, the function `renderText()` is not an observer/endpoint unless it is assigned to `output$foo`. This assignment wraps `renderText()` into another function which *is* an observer and is required if we want to send the data to the browser.
 
-We will demonstrate this by using the `renderPlot()` placeholder we created earlier and displaying the summary data from `acc_data()`. Note that we again limit the displayed data by the 'Severity' user input.
+We will demonstrate this by using the `renderPlot()` placeholder we created earlier and display the summary data from `acc_data()`. Note that we again limit the displayed data by the 'Severity' user input.
 
 ```{r, eval=F}
 output$plot <- renderPlot({
@@ -370,7 +416,7 @@ shinyApp(ui = ui,
 
 # Remember
 
-* Observers (or endpoints) respond to reactive events but reactive expressions do not - if you want a reactive expression to execut then you need an observer as an output.
+* Observers (or endpoints) respond to reactive events but reactive expressions do not - if you want a reactive expression to execute then you need an observer as an output.
 * Reactive expressions return values, observers do not!
 
 *Now go away*
