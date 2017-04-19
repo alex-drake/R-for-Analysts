@@ -53,17 +53,6 @@ AppKey <- "your app key here"
 requestUrl <- paste0("https://api-argon.tfl.gov.uk/AccidentStats/", year, "?app_id=", AppId, "&app_key=", AppKey)
 ```
 
-```{r, echo=F, message=F, warning=F}
-library(tidyverse)
-library(jsonlite)
-
-year <- "2015"
-AppId <- "*****"
-AppKey <- "*************************"
-
-requestUrl <- paste0("https://api-argon.tfl.gov.uk/AccidentStats/", year, "?app_id=", AppId, "&app_key=", AppKey)
-```
-
 The `requestUrl` should therefore return the collisions data for 2015 in JSON format. You can see what this looks like by copying and pasting the URL you just made into your browser (messy!). We now need to read that into R in a format that we can understand...
 
 ## Reading data from APIs
