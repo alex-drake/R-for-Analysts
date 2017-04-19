@@ -233,5 +233,3 @@ kable(head(d_clean,6))
 You should notice that using `lapply` is *slightly* faster than our `for` loop. Check out `?lapply` for more details to find out the specifics for each member of the `apply` family.
 
 Well done, you've extracted some data from the TfL API, cleaned it and carried out some basic summary functions! 
-
-For further information please see the cheatsheet on data wrangling [here](file://///onelondon.tfl.local/shared/rnperformance/R-DEV/04 Cheat Sheets and Guides/dplry and tidyr Cheatsheet.pdf)
