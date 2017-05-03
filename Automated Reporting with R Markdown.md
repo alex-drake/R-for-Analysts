@@ -1,7 +1,7 @@
 ---
 title: "Automated Reporting with R Markdown"
 author: "Alex Drake"
-date: "12 April 2017"
+date: "03 May 2017"
 output: 
   html_document:
     toc: true
